@@ -30,12 +30,7 @@ public class ConfiguracionService {
 
     private final ConfiguracionRepository configuracionRepository;
 
-    //NO
-    @Transactional(readOnly = true)
-    public List<Configuracion> obtenerTodos() {
-        log.info("Obteniendo todas las configuraciones");
-        return configuracionRepository.findAll();
-    }
+    
 
     @Transactional(readOnly = true)
     public Configuracion obtenerPorId(ConfiguracionPK id) {
@@ -65,24 +60,7 @@ public class ConfiguracionService {
         }
     }
 
-    // NO
-    @Transactional
-    public Configuracion actualizarFechaActivacion(ConfiguracionPK id, LocalDateTime nuevaFechaActivacion) {
-        try {
-            log.info("Actualizando fecha de activación para configuración: {}", id);
-            Configuracion configuracion = obtenerPorId(id);
-            validarFechaActivacion(nuevaFechaActivacion);
-            configuracion.setFechaActivacion(nuevaFechaActivacion);
-
-            Configuracion configuracionActualizada = configuracionRepository.save(configuracion);
-            log.info("Fecha de activación actualizada exitosamente");
-            return configuracionActualizada;
-        } catch (Exception ex) {
-            log.error("Error al actualizar fecha de activación: {}", ex.getMessage());
-            throw new ConfigurationException(ex.getMessage(), "Actualización de fecha de activación");
-        }
-    }
-
+   
     @Transactional(readOnly = true)
     public Configuracion obtenerConfiguracionActual() {
         log.info("Obteniendo configuración actual del POS");
