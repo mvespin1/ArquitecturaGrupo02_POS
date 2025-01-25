@@ -13,20 +13,17 @@ import java.util.HashMap;
 
 import lombok.RequiredArgsConstructor;
 
-// CAMBIAR NOMBRE DE LA CLASE A PROCESAMIENTO TRANSACCION CONTROLLER  
-// API TAMBIEN
 // VALIDACIONES
-// guardarTransaccionInicial A guardarTransaccionPos
 // Map<String, Object> no usar
 
 @CrossOrigin(origins = "http://localhost:3000")
 @RestController
-@RequestMapping("/v1/pagos")
-public class PagoController {
-    private static final Logger log = LoggerFactory.getLogger(PagoController.class);
+@RequestMapping("/v1/procesamiento-transaccion")
+public class ProcesamientoTransaccionController {
+    private static final Logger log = LoggerFactory.getLogger(ProcesamientoTransaccionController.class);
     private final TransaccionService transaccionService;
     
-    public PagoController(TransaccionService transaccionService) {
+    public ProcesamientoTransaccionController(TransaccionService transaccionService) {
         this.transaccionService = transaccionService;
     }
 
@@ -59,6 +56,7 @@ public class PagoController {
             response.put("mensaje", transaccionProcesada.getDetalle());
             return ResponseEntity.ok(response);
             
+            //no usar Map<String, si no la parte de programacion en objetos
         } catch (IllegalArgumentException e) {
             log.error("Error de validación: {}", e.getMessage());
             Map<String, String> errorResponse = new HashMap<>();
