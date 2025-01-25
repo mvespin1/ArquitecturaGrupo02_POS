@@ -33,15 +33,12 @@ public class PagoController {
         try {
             validarPayload(payload);
             
-            // Crear objeto transacción con datos básicos
             Transaccion transaccion = new Transaccion();
             transaccion.setMonto(new BigDecimal(payload.get("monto").toString()));
             transaccion.setMarca(payload.get("marca").toString());
-            
-            // Obtener datos sensibles encriptados
+                        
             String datosSensibles = payload.get("datosTarjeta").toString();
-            
-            // Obtener datos de diferido
+                        
             Boolean interesDiferido = payload.get("interesDiferido") != null ? 
                                     (Boolean) payload.get("interesDiferido") : false;
             Integer cuotas = interesDiferido && payload.get("cuotas") != null ? 
@@ -49,14 +46,11 @@ public class PagoController {
             
             log.info("Datos de diferido - Interés: {}, Cuotas: {}", interesDiferido, cuotas);
             
-            // Primero guardamos la transacción inicial
             Transaccion transaccionInicial = transaccionService.guardarTransaccionInicial(transaccion);
             log.info("Transacción guardada inicialmente: {}", transaccionInicial);
 
-            // Devolvemos respuesta inmediata
             Map<String, Object> responseInicial = crearRespuestaExitosa(transaccionInicial);
 
-            // Procesamos en segundo plano (utilizar el anterior)
             procesarTransaccionEnSegundoPlano(transaccionInicial, datosSensibles, interesDiferido, cuotas);
 
             return ResponseEntity.status(201).body(responseInicial);
