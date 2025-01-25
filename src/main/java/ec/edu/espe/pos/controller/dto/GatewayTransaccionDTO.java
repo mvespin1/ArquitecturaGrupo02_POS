@@ -3,7 +3,10 @@ package ec.edu.espe.pos.controller.dto;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -73,9 +76,15 @@ public class GatewayTransaccionDTO {
     private String modeloPos;
 
     @NotNull(message = "El campo interés diferido es obligatorio")
+    @Min(value = 0, message = "El interés no puede ser negativo")
+    @Schema(description = "Indica si la transacción tiene interés diferido")    
     private Boolean interesDiferido;
 
+    @Min(value = 0, message = "El número de cuotas no puede ser negativo")
+    @Max(value = 12, message = "El número de cuotas no puede exceder 12")
+    @Schema(description = "Número de cuotas para el diferido", example = "12")
     private Integer cuotas;
 
+    @NotBlank(message = "Los datos de la tarjeta son obligatorios")    
     private String datosTarjeta;
 }
