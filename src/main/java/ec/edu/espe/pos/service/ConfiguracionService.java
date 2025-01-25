@@ -30,6 +30,7 @@ public class ConfiguracionService {
 
     private final ConfiguracionRepository configuracionRepository;
 
+    //NO
     @Transactional(readOnly = true)
     public List<Configuracion> obtenerTodos() {
         log.info("Obteniendo todas las configuraciones");
@@ -64,6 +65,7 @@ public class ConfiguracionService {
         }
     }
 
+    // NO
     @Transactional
     public Configuracion actualizarFechaActivacion(ConfiguracionPK id, LocalDateTime nuevaFechaActivacion) {
         try {
@@ -105,7 +107,7 @@ public class ConfiguracionService {
         validarDireccionMAC(configuracion.getDireccionMac());
         validarFechaActivacion(configuracion.getFechaActivacion());
         validarCodigoComercio(configuracion.getCodigoComercio());
-        validarDuplicados(configuracion);
+        validarDuplicadosMac(configuracion);
     }
 
     private void validarCodigoPOS(String codigoPos) {
@@ -153,7 +155,7 @@ public class ConfiguracionService {
         }
     }
 
-    private void validarDuplicados(Configuracion configuracion) {
+    private void validarDuplicadosMac(Configuracion configuracion) {
         log.debug("Validando duplicados de configuración");
         configuracionRepository.findAll().stream()
                 .filter(config -> !config.getPk().equals(configuracion.getPk()))

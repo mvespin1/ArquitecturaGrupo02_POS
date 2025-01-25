@@ -22,23 +22,27 @@ import lombok.RequiredArgsConstructor;
 @CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/v1/pagos")
-@RequiredArgsConstructor
 public class PagoController {
     private static final Logger log = LoggerFactory.getLogger(PagoController.class);
     private final TransaccionService transaccionService;
+    
+    public PagoController(TransaccionService transaccionService) {
+        this.transaccionService = transaccionService;
+    }
 
     @PostMapping("/procesar")
     public ResponseEntity<Object> procesarPago(@RequestBody Map<String, Object> payload) {
         log.info("Recibiendo petición de pago desde frontend");
         try {
-            validarPayload(payload);
-            
+            // Crear objeto transacción con datos básicos
             Transaccion transaccion = new Transaccion();
             transaccion.setMonto(new BigDecimal(payload.get("monto").toString()));
             transaccion.setMarca(payload.get("marca").toString());
-                        
+            
+            // Obtener datos sensibles encriptados
             String datosSensibles = payload.get("datosTarjeta").toString();
-                        
+            
+            // Obtener datos de diferido
             Boolean interesDiferido = payload.get("interesDiferido") != null ? 
                                     (Boolean) payload.get("interesDiferido") : false;
             Integer cuotas = interesDiferido && payload.get("cuotas") != null ? 
@@ -46,64 +50,25 @@ public class PagoController {
             
             log.info("Datos de diferido - Interés: {}, Cuotas: {}", interesDiferido, cuotas);
             
-            Transaccion transaccionInicial = transaccionService.guardarTransaccionInicial(transaccion);
-            log.info("Transacción guardada inicialmente: {}", transaccionInicial);
-
-            Map<String, Object> responseInicial = crearRespuestaExitosa(transaccionInicial);
-
-            procesarTransaccionEnSegundoPlano(transaccionInicial, datosSensibles, interesDiferido, cuotas);
-
-            return ResponseEntity.status(201).body(responseInicial);
+            // El resto de valores se establecen en el servicio
+            Transaccion transaccionProcesada = transaccionService.crear(transaccion, datosSensibles, 
+                                                                       interesDiferido, cuotas);
+            log.info("Transacción procesada: {}", transaccionProcesada);
+            
+            Map<String, String> response = new HashMap<>();
+            response.put("mensaje", transaccionProcesada.getDetalle());
+            return ResponseEntity.ok(response);
             
         } catch (IllegalArgumentException e) {
             log.error("Error de validación: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(crearRespuestaError("Error de validación", e.getMessage()));
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("mensaje", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
         } catch (Exception e) {
             log.error("Error inesperado al procesar pago: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError()
-                    .body(crearRespuestaError("Error interno", "Error al procesar el pago"));
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("mensaje", "Error al procesar el pago: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(errorResponse);
         }
-    }
-
-    private void validarPayload(Map<String, Object> payload) {
-        if (payload.get("monto") == null) {
-            throw new IllegalArgumentException("El monto es requerido");
-        }
-        if (payload.get("marca") == null) {
-            throw new IllegalArgumentException("La marca es requerida");
-        }
-        if (payload.get("datosTarjeta") == null) {
-            throw new IllegalArgumentException("Los datos de la tarjeta son requeridos");
-        }
-    }
-
-    private Map<String, Object> crearRespuestaExitosa(Transaccion transaccion) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("mensaje", "Transacción registrada, procesando pago...");
-        response.put("estado", "pending");
-        response.put("transaccion", transaccion);
-        return response;
-    }
-
-    private Map<String, String> crearRespuestaError(String tipo, String mensaje) {
-        Map<String, String> response = new HashMap<>();
-        response.put("error", tipo);
-        response.put("mensaje", mensaje);
-        return response;
-    }
-
-    private void procesarTransaccionEnSegundoPlano(
-            Transaccion transaccion, 
-            String datosSensibles, 
-            Boolean interesDiferido, 
-            Integer cuotas) {
-        new Thread(() -> {
-            try {
-                transaccionService.procesarConGateway(transaccion, datosSensibles, 
-                                                    interesDiferido, cuotas);
-            } catch (Exception e) {
-                log.error("Error en procesamiento asíncrono: {}", e.getMessage());
-            }
-        }).start();
     }
 }
