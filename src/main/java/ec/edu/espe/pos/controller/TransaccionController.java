@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import ec.edu.espe.pos.service.TransaccionService;
 import ec.edu.espe.pos.controller.dto.TransaccionDTO;
 import ec.edu.espe.pos.controller.dto.ActualizacionEstadoDTO;
+import ec.edu.espe.pos.controller.dto.GatewayTransaccionDTO;
 import ec.edu.espe.pos.controller.mapper.TransaccionMapper;
 import ec.edu.espe.pos.model.Transaccion;
 import ec.edu.espe.pos.exception.NotFoundException;
