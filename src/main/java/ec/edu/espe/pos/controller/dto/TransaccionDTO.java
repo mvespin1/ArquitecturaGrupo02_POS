@@ -60,14 +60,17 @@ public class TransaccionDTO {
     @Schema(description = "Moneda de la transacción", example = "USD")
     private String moneda;
 
+    @NotNull(message = "Los datos sensibles no pueden ser nulos")
     @Schema(description = "Datos sensibles de la tarjeta (encriptados)")
     private String datosSensibles;
 
-    @Schema(description = "Indica si la transacción tiene interés diferido")
+    @NotNull(message = "El campo interés diferido es obligatorio")
+    @Min(value = 0, message = "El interés no puede ser negativo")
+    @Schema(description = "Indica si la transacción tiene interés diferido")    
     private Boolean interesDiferido;
 
     @Min(value = 0, message = "El número de cuotas no puede ser negativo")
-    @Max(value = 48, message = "El número de cuotas no puede exceder 48")
+    @Max(value = 12, message = "El número de cuotas no puede exceder 12")
     @Schema(description = "Número de cuotas para el diferido", example = "12")
     private Integer cuotas;
 } 
