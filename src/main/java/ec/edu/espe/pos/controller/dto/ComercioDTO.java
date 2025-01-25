@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
+//quitar
 @Data
 @NoArgsConstructor
 public class ComercioDTO {
