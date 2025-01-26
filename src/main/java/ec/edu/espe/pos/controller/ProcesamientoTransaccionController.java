@@ -26,8 +26,8 @@ import jakarta.validation.Valid;
 @RequestMapping("/v1/procesamiento-transaccion")
 @Tag(name = "Procesamiento de Transacciones", description = "API para procesar transacciones de pago en el POS")
 public class ProcesamientoTransaccionController {
+
     private static final Logger log = LoggerFactory.getLogger(ProcesamientoTransaccionController.class);
-    
     private final TransaccionService transaccionService;
     private final TransaccionMapper transaccionMapper;
     
@@ -50,6 +50,7 @@ public class ProcesamientoTransaccionController {
             content = @Content(mediaType = "application/json",
             schema = @Schema(implementation = TransaccionRespuestaDTO.class)))
     })
+    
     @PostMapping("/procesar")
     public ResponseEntity<TransaccionRespuestaDTO> procesarPago(
             @Valid @RequestBody GatewayTransaccionDTO request) {
