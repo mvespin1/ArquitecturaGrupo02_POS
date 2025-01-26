@@ -146,4 +146,8 @@ public class ConfiguracionService {
                     }
                 });
     }
+
+    public void imprimirHolaMundo() {
+        System.out.println("Hola Mundo");
+    }
 }
