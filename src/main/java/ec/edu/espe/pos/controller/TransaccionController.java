@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 import ec.edu.espe.pos.service.TransaccionService;
 import ec.edu.espe.pos.controller.dto.TransaccionDTO;
 import ec.edu.espe.pos.controller.dto.ActualizacionEstadoDTO;
-import ec.edu.espe.pos.controller.dto.GatewayTransaccionDTO;
 import ec.edu.espe.pos.controller.mapper.TransaccionMapper;
 import ec.edu.espe.pos.model.Transaccion;
 import ec.edu.espe.pos.exception.NotFoundException;
@@ -23,9 +22,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-
-//Revisar ConsultarEstado y ActualizarEstado
-// Revisar ExceptionHandler
 
 @RestController
 @RequestMapping("/v1/transacciones")
@@ -97,4 +93,4 @@ public class TransaccionController {
         response.setDetalle(e.getMessage());
         return ResponseEntity.status(404).body(response);
     }
-} 
+}
