@@ -80,11 +80,23 @@ public class TransaccionController {
         @ApiResponse(responseCode = "404", description = "Transacción no encontrada")
     })
     @PutMapping("/actualizar-estado")
-    public ResponseEntity<Void> actualizarEstado(
-            @Valid @RequestBody ActualizacionEstadoDTO actualizacion) {
-        log.info("Actualizando estado de transacción: {}", actualizacion.getCodigoUnicoTransaccion());
-        transaccionService.actualizarEstadoTransaccion(actualizacion);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Void> actualizarEstado(@RequestBody ActualizacionEstadoDTO actualizacion) {
+        log.info("Recibiendo actualización de estado desde Gateway: {}", actualizacion);
+        try {
+            transaccionService.actualizarEstadoTransaccion(actualizacion);
+            
+            // Retornar código según el estado
+            if (ESTADO_AUTORIZADO.equals(actualizacion.getEstado())) {
+                return ResponseEntity.status(201).build();
+            } else if (ESTADO_RECHAZADO.equals(actualizacion.getEstado())) {
+                return ResponseEntity.status(400).build();
+            } else {
+                return ResponseEntity.status(201).build();
+            }
+        } catch (Exception e) {
+            log.error("Error al actualizar estado: {}", e.getMessage());
+            return ResponseEntity.status(400).build();
+        }
     }
 
     @ExceptionHandler(NotFoundException.class)
