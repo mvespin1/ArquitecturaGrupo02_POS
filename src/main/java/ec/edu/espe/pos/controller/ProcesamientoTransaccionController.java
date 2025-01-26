@@ -17,7 +17,8 @@ import ec.edu.espe.pos.controller.dto.GatewayTransaccionDTO;
 import ec.edu.espe.pos.controller.dto.TransaccionRespuestaDTO;
 import ec.edu.espe.pos.controller.mapper.TransaccionMapper;
 import ec.edu.espe.pos.model.Transaccion;
-import ec.edu.espe.pos.exception.TransaccionException;
+import ec.edu.espe.pos.exception.NotFoundException;
+import ec.edu.espe.pos.exception.InvalidDataException;
 
 import jakarta.validation.Valid;
 
@@ -46,11 +47,13 @@ public class ProcesamientoTransaccionController {
         @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos",
             content = @Content(mediaType = "application/json",
             schema = @Schema(implementation = TransaccionRespuestaDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Recurso no encontrado",
+            content = @Content(mediaType = "application/json",
+            schema = @Schema(implementation = TransaccionRespuestaDTO.class))),
         @ApiResponse(responseCode = "500", description = "Error interno del servidor",
             content = @Content(mediaType = "application/json",
             schema = @Schema(implementation = TransaccionRespuestaDTO.class)))
     })
-    
     @PostMapping("/procesar")
     public ResponseEntity<TransaccionRespuestaDTO> procesarPago(
             @Valid @RequestBody GatewayTransaccionDTO request) {
@@ -76,16 +79,22 @@ public class ProcesamientoTransaccionController {
                     .estado(transaccionProcesada.getEstado())
                     .build());
                     
-        } catch (TransaccionException e) {
-            log.error("Error en la transacción: {}", e.getMessage());
+        } catch (InvalidDataException e) {
+            log.error("Error en la validación de datos: {}", e.getMessage());
             return ResponseEntity.badRequest().body(TransaccionRespuestaDTO.builder()
+                    .mensaje(e.getMessage())
+                    .estado("ERROR")
+                    .build());
+        } catch (NotFoundException e) {
+            log.error("Recurso no encontrado: {}", e.getMessage());
+            return ResponseEntity.status(404).body(TransaccionRespuestaDTO.builder()
                     .mensaje(e.getMessage())
                     .estado("ERROR")
                     .build());
         } catch (Exception e) {
             log.error("Error inesperado al procesar pago: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().body(TransaccionRespuestaDTO.builder()
-                    .mensaje("Error al procesar el pago: " + e.getMessage())
+                    .mensaje("Error interno del servidor")
                     .estado("ERROR")
                     .build());
         }
