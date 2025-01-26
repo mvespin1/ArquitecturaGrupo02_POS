@@ -13,5 +13,5 @@ public interface GatewayTransaccionClient {
 
     @PostMapping("/v1/transacciones/sincronizar")
     @ResponseBody
-    String sincronizarTransaccion(@RequestBody GatewayTransaccionDTO transaccion);
+    ResponseEntity<String> sincronizarTransaccion(@RequestBody GatewayTransaccionDTO transaccion);
 }

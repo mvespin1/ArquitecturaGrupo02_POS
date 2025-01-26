@@ -48,48 +48,54 @@ public class ProcesamientoTransaccionController {
             @ApiResponse(responseCode = "500", description = "Error interno del servidor", content = @Content(mediaType = "application/json", schema = @Schema(implementation = TransaccionRespuestaDTO.class)))
     })
     @PostMapping("/procesar")
-    public ResponseEntity<TransaccionRespuestaDTO> procesarPago(
-            @Valid @RequestBody GatewayTransaccionDTO request) {
-        log.info("Recibiendo petición de pago desde frontend: {}", request);
-        log.info("Recibiendo petición de pago desde frontend para la marca: {}", request.getMarca());
+    public ResponseEntity<TransaccionRespuestaDTO> procesarPago(@Valid @RequestBody GatewayTransaccionDTO request) {
+        log.info("Recibiendo petición para procesar pago: {}", request);
+
         try {
+            // Crear objeto transacción con datos básicos
             Transaccion transaccion = new Transaccion();
             transaccion.setMonto(request.getMonto());
             transaccion.setMarca(request.getMarca());
 
-            Transaccion transaccionProcesada = transaccionService.crear(
-                    transaccion,
-                    request.getDatosTarjeta(),
-                    request.getInteresDiferido(),
-                    request.getCuotas());
+            // Primero guardamos la transacción inicial
+            Transaccion transaccionInicial = transaccionService.guardarTransaccionInicial(transaccion);
+            log.info("Transacción guardada inicialmente: {}", transaccionInicial);
 
-            log.info("Transacción procesada exitosamente con código: {}",
-                    transaccionProcesada.getCodigoUnicoTransaccion());
+            // Devolver respuesta inmediata con estado "pending"
+            TransaccionRespuestaDTO respuestaInicial = TransaccionRespuestaDTO.builder()
+                    .mensaje("Transacción registrada, procesando pago...")
+                    .estado("pending")
+                    .codigoUnicoTransaccion(transaccionInicial.getCodigoUnicoTransaccion())
+                    .build();
 
-            return ResponseEntity.ok(TransaccionRespuestaDTO.builder()
-                    .mensaje(transaccionProcesada.getDetalle())
-                    .codigoUnicoTransaccion(transaccionProcesada.getCodigoUnicoTransaccion())
-                    .estado(transaccionProcesada.getEstado())
-                    .build());
+            // Procesamos la transacción en segundo plano
+            new Thread(() -> {
+                try {
+                    transaccionService.procesarConGateway(transaccionInicial,
+                            request.getDatosTarjeta(),
+                            request.getInteresDiferido(),
+                            request.getCuotas());
+                } catch (Exception e) {
+                    log.error("Error en procesamiento asíncrono: {}", e.getMessage());
+                }
+            }).start();
+
+            // Retornar respuesta inmediata al cliente
+            return ResponseEntity.status(201).body(respuestaInicial);
 
         } catch (InvalidDataException e) {
-            log.error("Error en la validación de datos: {}", e.getMessage());
+            log.error("Error en datos de entrada: {}", e.getMessage());
             return ResponseEntity.badRequest().body(TransaccionRespuestaDTO.builder()
                     .mensaje(e.getMessage())
                     .estado("ERROR")
                     .build());
-        } catch (NotFoundException e) {
-            log.error("Recurso no encontrado: {}", e.getMessage());
-            return ResponseEntity.status(404).body(TransaccionRespuestaDTO.builder()
-                    .mensaje(e.getMessage())
-                    .estado("ERROR")
-                    .build());
         } catch (Exception e) {
-            log.error("Error inesperado al procesar pago: {}", e.getMessage(), e);
+            log.error("Error inesperado al procesar pago: {}", e.getMessage());
             return ResponseEntity.internalServerError().body(TransaccionRespuestaDTO.builder()
                     .mensaje("Error interno del servidor")
                     .estado("ERROR")
                     .build());
         }
     }
+
 }
