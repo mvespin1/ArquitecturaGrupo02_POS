@@ -139,7 +139,7 @@ const MainPage = () => {
 
       console.log("Payload a enviar:", transactionPayload);
 
-      const response = await fetch("http://localhost:8081/v1/pagos/procesar", {
+      const response = await fetch("http://localhost:8081/v1/procesamiento-transaccion/procesar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(transactionPayload),

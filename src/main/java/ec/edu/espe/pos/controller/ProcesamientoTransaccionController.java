@@ -22,7 +22,9 @@ import ec.edu.espe.pos.exception.InvalidDataException;
 
 import jakarta.validation.Valid;
 
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "http://localhost:3000/", allowedHeaders = "*", methods = {
+        RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS
+})
 @RestController
 @RequestMapping("/v1/procesamiento-transaccion")
 @Tag(name = "Procesamiento de Transacciones", description = "API para procesar transacciones de pago en el POS")
@@ -31,54 +33,45 @@ public class ProcesamientoTransaccionController {
     private static final Logger log = LoggerFactory.getLogger(ProcesamientoTransaccionController.class);
     private final TransaccionService transaccionService;
     private final TransaccionMapper transaccionMapper;
-    
-    public ProcesamientoTransaccionController(TransaccionService transaccionService, 
-                                            TransaccionMapper transaccionMapper) {
+
+    public ProcesamientoTransaccionController(TransaccionService transaccionService,
+            TransaccionMapper transaccionMapper) {
         this.transaccionService = transaccionService;
         this.transaccionMapper = transaccionMapper;
     }
 
-    @Operation(summary = "Procesar una nueva transacción de pago",
-               description = "Procesa una transacción de pago con los datos de la tarjeta y opciones de diferido")
+    @Operation(summary = "Procesar una nueva transacción de pago", description = "Procesa una transacción de pago con los datos de la tarjeta y opciones de diferido")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Transacción procesada exitosamente",
-            content = @Content(mediaType = "application/json",
-            schema = @Schema(implementation = TransaccionRespuestaDTO.class))),
-        @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos",
-            content = @Content(mediaType = "application/json",
-            schema = @Schema(implementation = TransaccionRespuestaDTO.class))),
-        @ApiResponse(responseCode = "404", description = "Recurso no encontrado",
-            content = @Content(mediaType = "application/json",
-            schema = @Schema(implementation = TransaccionRespuestaDTO.class))),
-        @ApiResponse(responseCode = "500", description = "Error interno del servidor",
-            content = @Content(mediaType = "application/json",
-            schema = @Schema(implementation = TransaccionRespuestaDTO.class)))
+            @ApiResponse(responseCode = "200", description = "Transacción procesada exitosamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = TransaccionRespuestaDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos", content = @Content(mediaType = "application/json", schema = @Schema(implementation = TransaccionRespuestaDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Recurso no encontrado", content = @Content(mediaType = "application/json", schema = @Schema(implementation = TransaccionRespuestaDTO.class))),
+            @ApiResponse(responseCode = "500", description = "Error interno del servidor", content = @Content(mediaType = "application/json", schema = @Schema(implementation = TransaccionRespuestaDTO.class)))
     })
     @PostMapping("/procesar")
     public ResponseEntity<TransaccionRespuestaDTO> procesarPago(
             @Valid @RequestBody GatewayTransaccionDTO request) {
+        log.info("Recibiendo petición de pago desde frontend: {}", request);
         log.info("Recibiendo petición de pago desde frontend para la marca: {}", request.getMarca());
         try {
             Transaccion transaccion = new Transaccion();
             transaccion.setMonto(request.getMonto());
             transaccion.setMarca(request.getMarca());
-            
+
             Transaccion transaccionProcesada = transaccionService.crear(
-                transaccion, 
-                request.getDatosTarjeta(),
-                request.getInteresDiferido(),
-                request.getCuotas()
-            );
-            
-            log.info("Transacción procesada exitosamente con código: {}", 
+                    transaccion,
+                    request.getDatosTarjeta(),
+                    request.getInteresDiferido(),
+                    request.getCuotas());
+
+            log.info("Transacción procesada exitosamente con código: {}",
                     transaccionProcesada.getCodigoUnicoTransaccion());
-            
+
             return ResponseEntity.ok(TransaccionRespuestaDTO.builder()
                     .mensaje(transaccionProcesada.getDetalle())
                     .codigoUnicoTransaccion(transaccionProcesada.getCodigoUnicoTransaccion())
                     .estado(transaccionProcesada.getEstado())
                     .build());
-                    
+
         } catch (InvalidDataException e) {
             log.error("Error en la validación de datos: {}", e.getMessage());
             return ResponseEntity.badRequest().body(TransaccionRespuestaDTO.builder()
