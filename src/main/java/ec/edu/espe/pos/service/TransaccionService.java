@@ -8,6 +8,7 @@ import ec.edu.espe.pos.controller.dto.ActualizacionEstadoDTO;
 import ec.edu.espe.pos.controller.dto.ComercioDTO;
 import ec.edu.espe.pos.controller.dto.FacturacionComercioDTO;
 import ec.edu.espe.pos.controller.dto.GatewayTransaccionDTO;
+import ec.edu.espe.pos.controller.mapper.TransaccionMapper;
 import ec.edu.espe.pos.client.GatewayComercioClient;
 import ec.edu.espe.pos.exception.NotFoundException;
 import ec.edu.espe.pos.exception.InvalidDataException;
@@ -16,15 +17,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Set;
-import java.util.UUID;
 import java.util.Random;
 
-import lombok.RequiredArgsConstructor;
 
 @Service
 public class TransaccionService {
@@ -70,6 +68,7 @@ public class TransaccionService {
 
         if (transaccion.getMarca() == null || transaccion.getMarca().length() > 4
                 || !MARCAS_VALIDAS.contains(transaccion.getMarca())) {
+            log.error("Marca inválida: {}", transaccion.getMarca());
             throw new InvalidDataException(
                     "Marca inválida. Debe ser una de: " + String.join(", ", MARCAS_VALIDAS));
         }
@@ -80,25 +79,33 @@ public class TransaccionService {
         transaccion.setFecha(LocalDateTime.now());
         transaccion.setEstado(ESTADO_ENVIADO);
         transaccion.setEstadoRecibo(ESTADO_RECIBO_PENDIENTE);
-
-        String codigoUnico = "TRX" + System.currentTimeMillis();
+        String codigoUnico = generarCodigoUnico();
         transaccion.setCodigoUnicoTransaccion(codigoUnico);
         transaccion.setDetalle("Transacción POS - " + transaccion.getMarca());
 
-        log.info("Valores establecidos para transacción: marca={}, monto={}",
-                transaccion.getMarca(), transaccion.getMonto());
+        log.info("Valores establecidos para transacción: marca={}, monto={}, codigoUnico={}",
+                transaccion.getMarca(), transaccion.getMonto(), transaccion.getCodigoUnicoTransaccion());
 
         validarCamposObligatorios(transaccion);
         log.info("Validación de campos completada exitosamente");
 
+        if (interesDiferido == null) {
+            interesDiferido = false;
+        }
+        if (cuotas == null) {
+            cuotas = 0;
+        }
+
+        log.info("Guardando transacción en la base de datos: {}", transaccion);
+
+        // Guardar la transacción
         Transaccion transaccionGuardada = transaccionRepository.save(transaccion);
         log.info("Transacción guardada localmente con ID: {}", transaccionGuardada.getCodigo());
 
         try {
-
             GatewayTransaccionDTO gatewayDTO = convertirAGatewayDTO(transaccionGuardada, datosSensibles,
                     interesDiferido, cuotas);
-            log.info("Enviando al gateway DTO con datos de tarjeta incluidos");
+            log.info("DTO preparado para enviar al gateway: {}", gatewayDTO);
 
             String respuesta = gatewayClient.sincronizarTransaccion(gatewayDTO);
             log.info("Respuesta del gateway: {}", respuesta);
@@ -106,6 +113,7 @@ public class TransaccionService {
             transaccionGuardada.setDetalle(respuesta);
             transaccionGuardada = transaccionRepository.save(transaccionGuardada);
 
+            log.info("Transacción actualizada con respuesta del gateway: {}", transaccionGuardada);
             return transaccionGuardada;
         } catch (Exception e) {
             log.error("Error al sincronizar con el gateway: {}", e.getMessage());
@@ -130,10 +138,9 @@ public class TransaccionService {
 
     private GatewayTransaccionDTO convertirAGatewayDTO(Transaccion transaccion, String datosSensibles,
             Boolean interesDiferido, Integer cuotas) {
-        GatewayTransaccionDTO dto = new GatewayTransaccionDTO();
-
+            
+            GatewayTransaccionDTO dto = new GatewayTransaccionDTO();
         try {
-
             log.info("Obteniendo configuración actual del POS");
             Configuracion config = configuracionService.obtenerConfiguracionActual();
 
@@ -145,7 +152,6 @@ public class TransaccionService {
 
             dto.setComercio(comercio);
             dto.setFacturacionComercio(facturacion);
-
             dto.setTipo(transaccion.getModalidad());
             dto.setMarca(transaccion.getMarca());
             dto.setDetalle(transaccion.getDetalle());
@@ -155,17 +161,13 @@ public class TransaccionService {
             dto.setEstado(transaccion.getEstado());
             dto.setMoneda(transaccion.getMoneda());
             dto.setPais("EC");
-
             dto.setCodigoPos(config.getPk().getCodigo());
             dto.setModeloPos(config.getPk().getModelo());
-
             dto.setTarjeta(datosSensibles);
-
             dto.setInteresDiferido(interesDiferido);
             dto.setCuotas(cuotas);
 
-            log.info("DTO preparado para enviar al gateway. Comercio código: {}, POS código: {}, modelo: {}",
-                    comercio.getCodigo(), config.getPk().getCodigo(), config.getPk().getModelo());
+            log.info("DTO creado para el gateway: {}", dto);
 
         } catch (Exception e) {
             log.error("Error al obtener datos del comercio: {}", e.getMessage());
@@ -182,7 +184,20 @@ public class TransaccionService {
 
     public void actualizarEstadoTransaccion(ActualizacionEstadoDTO actualizacion) {
         Transaccion transaccion = obtenerPorCodigoUnico(actualizacion.getCodigoUnicoTransaccion());
-        transaccion.setEstado(actualizacion.getNuevoEstado());
+        transaccion.setEstado(actualizacion.getEstado());
         transaccionRepository.save(transaccion);
+    }
+
+    private String generarCodigoUnico() {
+        LocalDateTime now = LocalDateTime.now();
+        return String.format("TRX%06d-%d-%02d-%02d-%02d-%02d-%02d-%012d",
+            new Random().nextInt(1000000), // simulando un ID secuencial
+            now.getYear(),
+            now.getMonthValue(),
+            now.getDayOfMonth(),
+            now.getHour(),
+            now.getMinute(),
+            now.getSecond(),
+            1L); // ID de facturación, ajustar según necesidad
     }
 }

@@ -3,6 +3,7 @@ package ec.edu.espe.pos.controller;
 import ec.edu.espe.pos.model.Configuracion;
 import ec.edu.espe.pos.model.ConfiguracionPK;
 import ec.edu.espe.pos.service.ConfiguracionService;
+import ec.edu.espe.pos.controller.dto.ConfiguracionDTO;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +16,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import jakarta.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -121,9 +123,14 @@ public class ConfiguracionController {
     @PostMapping("/sincronizar")
     public ResponseEntity<Configuracion> recibirConfiguracion(
             @Parameter(description = "Configuración a sincronizar")
-            @RequestBody Configuracion configuracion) {
+            @Valid @RequestBody ConfiguracionDTO configuracionDTO) {
         log.info("Recibiendo configuración para sincronización. PK: {}, MAC: {}",
-                configuracion.getPk(), configuracion.getDireccionMac());
+                configuracionDTO.getPk(), configuracionDTO.getDireccionMac());
+        Configuracion configuracion = new Configuracion();
+        configuracion.setPk(configuracionDTO.getPk());
+        configuracion.setDireccionMac(configuracionDTO.getDireccionMac());
+        configuracion.setCodigoComercio(configuracionDTO.getCodigoComercio());
+        configuracion.setFechaActivacion(configuracionDTO.getFechaActivacion());
         return ResponseEntity.ok(configuracionService.crear(configuracion));
     }
 }

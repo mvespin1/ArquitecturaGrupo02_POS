@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import ec.edu.espe.pos.service.TransaccionService;
 import ec.edu.espe.pos.controller.dto.TransaccionDTO;
 import ec.edu.espe.pos.controller.dto.ActualizacionEstadoDTO;
+import ec.edu.espe.pos.controller.dto.GatewayTransaccionDTO;
 import ec.edu.espe.pos.controller.mapper.TransaccionMapper;
 import ec.edu.espe.pos.model.Transaccion;
 import ec.edu.espe.pos.exception.NotFoundException;
@@ -40,18 +41,18 @@ public class TransaccionController {
     @Operation(summary = "Crear una nueva transacción")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Transacción creada exitosamente",
-                    content = @Content(schema = @Schema(implementation = TransaccionDTO.class))),
+                    content = @Content(schema = @Schema(implementation = GatewayTransaccionDTO.class))),
         @ApiResponse(responseCode = "400", description = "Datos de transacción inválidos"),
         @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
     @PostMapping
-    public ResponseEntity<TransaccionDTO> crearTransaccion(
-            @Valid @RequestBody TransaccionDTO transaccionDTO) {
+    public ResponseEntity<GatewayTransaccionDTO> crearTransaccion(
+            @Valid @RequestBody GatewayTransaccionDTO transaccionDTO) {
         log.info("Creando nueva transacción");
         Transaccion transaccion = mapper.toModel(transaccionDTO);
         Transaccion resultado = transaccionService.crear(
             transaccion, 
-            transaccionDTO.getDatosSensibles(),
+            transaccionDTO.getDatosTarjeta(),
             transaccionDTO.getInteresDiferido(),
             transaccionDTO.getCuotas()
         );
@@ -64,7 +65,7 @@ public class TransaccionController {
         @ApiResponse(responseCode = "404", description = "Transacción no encontrada")
     })
     @GetMapping("/{codigoUnicoTransaccion}/estado")
-    public ResponseEntity<TransaccionDTO> consultarEstado(
+    public ResponseEntity<GatewayTransaccionDTO> consultarEstado(
             @Parameter(description = "Código único de la transacción") 
             @PathVariable String codigoUnicoTransaccion) {
         log.info("Consultando estado de transacción: {}", codigoUnicoTransaccion);

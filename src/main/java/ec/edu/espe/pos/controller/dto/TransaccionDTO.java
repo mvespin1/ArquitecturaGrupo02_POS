@@ -65,7 +65,6 @@ public class TransaccionDTO {
     private String datosSensibles;
 
     @NotNull(message = "El campo interés diferido es obligatorio")
-    @Min(value = 0, message = "El interés no puede ser negativo")
     @Schema(description = "Indica si la transacción tiene interés diferido")    
     private Boolean interesDiferido;
 
