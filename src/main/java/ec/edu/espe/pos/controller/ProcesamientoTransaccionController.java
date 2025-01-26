@@ -56,7 +56,7 @@ public class ProcesamientoTransaccionController {
                       {
                         "monto": "100.50",
                         "marca": "VISA",
-                        "datosTarjeta": "datos_encriptados",
+                        "datosTarjeta": "datos_tarjeta",
                         "interesDiferido": true,
                         "cuotas": 3
                       }

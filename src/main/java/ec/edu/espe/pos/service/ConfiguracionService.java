@@ -4,7 +4,8 @@ import ec.edu.espe.pos.model.Configuracion;
 import ec.edu.espe.pos.model.ConfiguracionPK;
 import ec.edu.espe.pos.repository.ConfiguracionRepository;
 import ec.edu.espe.pos.exception.NotFoundException;
-import ec.edu.espe.pos.exception.ConfigurationException;
+import ec.edu.espe.pos.exception.InvalidDataException;
+import ec.edu.espe.pos.exception.DuplicateException;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,8 +31,6 @@ public class ConfiguracionService {
 
     private final ConfiguracionRepository configuracionRepository;
 
-    
-
     @Transactional(readOnly = true)
     public Configuracion obtenerPorId(ConfiguracionPK id) {
         log.info("Buscando configuración con ID: {}", id);
@@ -44,38 +43,55 @@ public class ConfiguracionService {
         try {
             log.info("Creando nueva configuración para POS: {}", configuracion.getPk().getCodigo());
             validarConfiguracion(configuracion);
-            
+
             ConfiguracionPK pk = new ConfiguracionPK(
-                configuracion.getPk().getCodigo(),
-                configuracion.getPk().getModelo()
-            );
+                    configuracion.getPk().getCodigo(),
+                    configuracion.getPk().getModelo());
             configuracion.setPk(pk);
-            
+
             Configuracion configuracionGuardada = configuracionRepository.save(configuracion);
             log.info("Configuración creada exitosamente");
             return configuracionGuardada;
         } catch (Exception e) {
             log.error("Error al crear configuración: {}", e.getMessage());
-            throw new ConfigurationException(e.getMessage(), "Creación de configuración");
+            throw new InvalidDataException("Error al crear configuración: " + e.getMessage());
         }
     }
 
-   
     @Transactional(readOnly = true)
     public Configuracion obtenerConfiguracionActual() {
         log.info("Obteniendo configuración actual del POS");
         List<Configuracion> configuraciones = configuracionRepository.findAll();
-        
+
         if (configuraciones.isEmpty()) {
             log.error("No existe configuración para este POS");
             throw new NotFoundException("configuracion-actual", ENTITY_NAME);
         }
         if (configuraciones.size() > 1) {
             log.error("Se encontraron múltiples configuraciones para el POS");
-            throw new ConfigurationException("Múltiples configuraciones", "Validación de unicidad");
+            throw new DuplicateException("múltiples configuraciones", ENTITY_NAME);
         }
-        
+
         return configuraciones.get(0);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Configuracion> obtenerTodos() {
+        log.info("Obteniendo todas las configuraciones");
+        return configuracionRepository.findAll();
+    }
+
+    @Transactional
+    public Configuracion actualizarFechaActivacion(ConfiguracionPK id, LocalDateTime nuevaFechaActivacion) {
+        log.info("Actualizando fecha de activación para configuración: {}", id);
+        Configuracion configuracion = obtenerPorId(id);
+
+        if (nuevaFechaActivacion != null && nuevaFechaActivacion.isAfter(LocalDateTime.now())) {
+            throw new InvalidDataException("La fecha de activación no puede ser posterior a la fecha actual");
+        }
+
+        configuracion.setFechaActivacion(nuevaFechaActivacion);
+        return configuracionRepository.save(configuracion);
     }
 
     private void validarConfiguracion(Configuracion configuracion) {
@@ -91,45 +107,44 @@ public class ConfiguracionService {
     private void validarCodigoPOS(String codigoPos) {
         if (codigoPos == null || codigoPos.length() != CODIGO_POS_LENGTH) {
             log.error("Error de validación: código POS con longitud incorrecta");
-            throw new ConfigurationException(codigoPos, "Longitud de código POS");
+            throw new InvalidDataException("Código POS con longitud incorrecta: " + codigoPos);
         }
         if (!codigoPos.matches(String.format(PATRON_ALFANUMERICO, CODIGO_POS_LENGTH))) {
             log.error("Error de validación: código POS con formato incorrecto");
-            throw new ConfigurationException(codigoPos, "Formato de código POS");
+            throw new InvalidDataException("Código POS con formato incorrecto: " + codigoPos);
         }
     }
 
     private void validarModelo(String modelo) {
         if (modelo == null || modelo.length() > MODELO_LENGTH) {
             log.error("Error de validación: modelo con longitud incorrecta");
-            throw new ConfigurationException(modelo, "Longitud de modelo");
+            throw new InvalidDataException("Modelo con longitud incorrecta: " + modelo);
         }
         if (!modelo.matches(String.format(PATRON_ALFANUMERICO, modelo.length()))) {
             log.error("Error de validación: modelo con formato incorrecto");
-            throw new ConfigurationException(modelo, "Formato de modelo");
+            throw new InvalidDataException("Modelo con formato incorrecto: " + modelo);
         }
     }
 
     private void validarDireccionMAC(String direccionMac) {
         if (direccionMac == null || !MAC_ADDRESS_PATTERN.matcher(direccionMac).matches()) {
             log.error("Error de validación: dirección MAC con formato incorrecto");
-            throw new ConfigurationException(direccionMac, "Formato de dirección MAC");
+            throw new InvalidDataException("Dirección MAC con formato incorrecto: " + direccionMac);
         }
     }
 
     private void validarFechaActivacion(LocalDateTime fechaActivacion) {
         if (fechaActivacion != null && fechaActivacion.isAfter(LocalDateTime.now())) {
             log.error("Error de validación: fecha de activación posterior a la actual");
-            throw new ConfigurationException(fechaActivacion.toString(), "Fecha de activación");
+            throw new InvalidDataException("Fecha de activación posterior a la actual: " + fechaActivacion);
         }
     }
 
     private void validarCodigoComercio(Integer codigoComercio) {
         if (codigoComercio == null || codigoComercio <= 0) {
             log.error("Error de validación: código de comercio inválido");
-            throw new ConfigurationException(
-                codigoComercio != null ? codigoComercio.toString() : "null", 
-                "Código de comercio");
+            throw new InvalidDataException("Código de comercio inválido: " +
+                    (codigoComercio != null ? codigoComercio.toString() : "null"));
         }
     }
 
@@ -140,9 +155,7 @@ public class ConfiguracionService {
                 .forEach(config -> {
                     if (config.getDireccionMac().equals(configuracion.getDireccionMac())) {
                         log.error("Error de validación: dirección MAC duplicada");
-                        throw new ConfigurationException(
-                            configuracion.getDireccionMac(), 
-                            "Dirección MAC duplicada");
+                        throw new DuplicateException(configuracion.getDireccionMac(), "Dirección MAC");
                     }
                 });
     }
