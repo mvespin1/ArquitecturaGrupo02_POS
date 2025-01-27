@@ -19,6 +19,5 @@ public class ActualizacionEstadoDTO {
     @NotNull(message = "El mensaje es obligatorio") 
     private String mensaje;
 
-    // @NotNull(message = "El detalle es obligatorio")
     private String detalle;
 } 

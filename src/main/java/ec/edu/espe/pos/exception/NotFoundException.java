@@ -1,8 +1,5 @@
 package ec.edu.espe.pos.exception;
 
-
-//REDUCIR LAS EXCEPCIONES A NOTFOUND EXCEPTION Y DUPLICATE EXCEPTION
-
 public class NotFoundException extends RuntimeException {
 
     private final String data;

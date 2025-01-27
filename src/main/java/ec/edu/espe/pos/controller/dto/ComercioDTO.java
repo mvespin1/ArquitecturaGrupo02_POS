@@ -5,8 +5,6 @@ import jakarta.validation.constraints.Positive;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-// SI SE UTILIZA
-
 @Data
 @NoArgsConstructor
 public class ComercioDTO {
