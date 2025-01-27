@@ -85,7 +85,6 @@ public class TransaccionController {
         try {
             transaccionService.actualizarEstadoTransaccion(actualizacion);
             
-            // Retornar código según el estado
             if (ESTADO_AUTORIZADO.equals(actualizacion.getEstado())) {
                 return ResponseEntity.status(201).build();
             } else if (ESTADO_RECHAZADO.equals(actualizacion.getEstado())) {
