@@ -201,15 +201,17 @@ const MainPage = () => {
         return;
       }
 
-      if (result.transaccion) {
-        setCurrentTransaction(result.transaccion);
+      if (result.codigoUnicoTransaccion) {
+        setCurrentTransaction({
+          codigoUnicoTransaccion: result.codigoUnicoTransaccion
+        });
         setNotification({
           show: true,
-          message: "Transacción registrada, procesando pago...",
+          message: result.mensaje || "Transacción registrada, procesando pago...",
           type: "warning"
         });
       }
-
+      
       resetForm();
     } catch (error) {
       console.error('Error detallado:', error);
