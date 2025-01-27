@@ -66,25 +66,21 @@ public class TransaccionService {
             Boolean interesDiferido, Integer cuotas) {
         log.info("Iniciando creación de transacción. Datos recibidos: {}", transaccion);
 
-        // Fase 1: Validación y guardado inicial
         Transaccion transaccionInicial = guardarTransaccionInicial(transaccion);
         log.info("Transacción guardada inicialmente: {}", transaccionInicial);
         log.info("Código único de la transacción guardada: {}", transaccionInicial.getCodigoUnicoTransaccion());
 
-        // Fase 2: Procesamiento con el gateway
         return procesarConGateway(transaccionInicial, datosSensibles, interesDiferido, cuotas);
     }
 
     @Transactional
     public Transaccion guardarTransaccionInicial(Transaccion transaccion) {
-        // Validar y transformar marca si es necesario
         if (transaccion.getMarca() == null || transaccion.getMarca().length() > 4
                 || !MARCAS_VALIDAS.contains(transaccion.getMarca())) {
             throw new IllegalArgumentException(
                     "Marca inválida. Debe ser una de: " + String.join(", ", MARCAS_VALIDAS));
         }
 
-        // Establecer valores predeterminados
         transaccion.setTipo(TIPO_PAGO);
         transaccion.setModalidad(MODALIDAD_SIMPLE);
         transaccion.setMoneda("USD");
@@ -92,7 +88,6 @@ public class TransaccionService {
         transaccion.setEstado(ESTADO_ENVIADO);
         transaccion.setEstadoRecibo(ESTADO_RECIBO_PENDIENTE);
 
-        // Generar código único y detalle
         String codigoUnico = generarCodigoUnico();
         transaccion.setCodigoUnicoTransaccion(codigoUnico);
         transaccion.setDetalle("Transacción POS - " + transaccion.getMarca());
@@ -100,11 +95,9 @@ public class TransaccionService {
         log.info("Valores establecidos para transacción inicial: marca={}, monto={}",
                 transaccion.getMarca(), transaccion.getMonto());
 
-        // Validar campos obligatorios
         validarDatos(transaccion);
         log.info("Validación de campos completada exitosamente");
 
-        // Guardar transacción inicial
         return transaccionRepository.save(transaccion);
     }
 
@@ -112,7 +105,6 @@ public class TransaccionService {
     public Transaccion procesarConGateway(Transaccion transaccion, String datosSensibles,
             Boolean interesDiferido, Integer cuotas) {
         try {
-            // Preparar y enviar al gateway
             GatewayTransaccionDTO gatewayDTO = prepararGatewayDTO(transaccion, datosSensibles,
                     interesDiferido, cuotas);
             log.info("Enviando al gateway DTO con datos de tarjeta incluidos");
@@ -121,7 +113,6 @@ public class TransaccionService {
             log.info("Respuesta del gateway - Status: {}, Body: {}", 
                     respuesta.getStatusCode(), respuesta.getBody());
 
-            // Actualizar estado basado en el código HTTP y el mensaje
             if (respuesta.getStatusCode().is2xxSuccessful() && 
                 respuesta.getBody() != null && 
                 respuesta.getBody().contains("aceptada")) {
@@ -132,15 +123,13 @@ public class TransaccionService {
                 transaccion.setEstado(ESTADO_RECHAZADO);
                 log.info("Transacción rechazada");
             } else if (respuesta.getStatusCode().value() == 202) {
-                // Handle the EN_VALIDACION state if necessary
                 log.info("Transacción en proceso de validación");
-                // You might want to set a different state or log this
             } else {
                 log.warn("Estado inesperado recibido: {}", respuesta.getStatusCode());
-                transaccion.setEstado(ESTADO_RECHAZADO); // Default to rejected for unexpected states
+                transaccion.setEstado(ESTADO_RECHAZADO); 
             }
             
-            // Actualizar la transacción con el nuevo estado
+           
             transaccion = transaccionRepository.save(transaccion);
             log.info("Estado de transacción actualizado a: {}", transaccion.getEstado());
 
@@ -208,11 +197,9 @@ public class TransaccionService {
                 actualizacion.getCodigoUnicoTransaccion())
                 .orElseThrow(() -> new RuntimeException("Transacción no encontrada"));
 
-        // Actualizar estado
         transaccion.setEstado(actualizacion.getEstado());
         transaccion.setDetalle(actualizacion.getMensaje());
         
-        // Guardar cambios
         transaccionRepository.save(transaccion);
         log.info("Estado de transacción actualizado a: {}", actualizacion.getEstado());
     }

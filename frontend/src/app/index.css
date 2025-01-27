@@ -1,9 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
 /* General Styles */
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Poppins', Arial, sans-serif;
   margin: 0;
   padding: 0;
-  background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364); /* Fondo degradado */
+  background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
   color: #e2e8f0;
 }
 
@@ -14,7 +16,8 @@ body {
   background-color: #ffffff;
   border-radius: 12px;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-  font-family: "Inter", sans-serif;
+  font-family: 'Poppins', Arial, sans-serif;
+  animation: fadeIn 0.8s ease-out;
 }
 
 .main-title {
@@ -23,17 +26,37 @@ body {
   margin-bottom: 2rem;
   font-size: 2rem;
   font-weight: bold;
+  font-family: 'Poppins', Arial, sans-serif;
 }
 
-/* Form Styles */
+.error-message {
+  color: #dc2626;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+  font-weight: 500;
+  animation: fadeIn 0.5s ease-out; /* Animación para los mensajes de error */
+}
+
 .form {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  animation: fadeInUp 0.8s ease-out;
 }
 
-.form-group {
-  position: relative;
+.form-group label {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  display: block;
+  color: #333333;
+  font-family: 'Poppins', Arial, sans-serif;
+}
+
+.form-input:focus {
+  border-color: #3b82f6;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
 }
 
 .form-input {
@@ -43,55 +66,57 @@ body {
   border: 1px solid #ccc;
   font-size: 1rem;
   color: #333;
-}
-
-.form-input::placeholder {
-  color: #999;
-}
-
-.error-message {
-  color: #b91c1c;
-  font-size: 0.9rem;
-  margin-top: 5px;
+  background-color: #ebf8ff;
+  transition: all 0.3s ease;
+  font-family: 'Poppins', Arial, sans-serif;
 }
 
 .form-button {
-  background-color: #3b82f6;
-  color: #ffffff;
+  display: block;
+  width: 100%;
   padding: 15px;
+  font-size: 1.1rem;
+  text-align: center;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: #3b82f6;
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  text-align: center;
-  font-size: 1rem;
-  font-weight: bold;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+  font-family: 'Poppins', Arial, sans-serif;
 }
 
 .form-button:hover {
   background-color: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
-.form-input {
-  width: 100%;
-  padding: 10px;
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px 25px;
   border-radius: 8px;
-  border: 1px solid #ccc; /* Color del borde */
-  font-size: 1rem;
-  color: #333; /* Color del texto */
-  background-color: #ebf8ff; /* Fondo azul claro */
+  color: #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  animation: slideIn 0.5s ease-out;
+  font-family: 'Poppins', Arial, sans-serif;
 }
 
-.form-input::placeholder {
-  color: #999; /* Color del texto placeholder */
+.notification.success {
+  background-color: #4CAF50;
 }
 
-.form-group label {
-  font-size: 0.9rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-  display: block;
-  color: #333;
+.notification.error {
+  background-color: #f44336;
+}
+
+.notification.warning {
+  background-color: #ff9800;
 }
 
 @keyframes slideIn {
@@ -105,38 +130,28 @@ body {
   }
 }
 
-.notification {
-  transition: all 0.3s ease-in-out;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-.notification.success {
-  background-color: #4CAF50;
-}
-
-.notification.error {
-  background-color: #f44336;
-}
-
-.radio-group {
-  display: flex;
-  gap: 2rem;
-  margin-top: 0.5rem;
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .radio-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-}
-
-.form-radio {
-  width: 1.2rem;
-  height: 1.2rem;
-  margin: 0;
-}
-
-.radio-group-label {
-  display: block;
-  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  color: #1e293b;
+  font-family: 'Poppins', Arial, sans-serif;
 }
