@@ -19,12 +19,11 @@ const MainPage = () => {
   const [currentTransaction, setCurrentTransaction] = useState(null);
   const [pollingInterval, setPollingInterval] = useState(null);
 
-  // Función para consultar el estado de la transacción
   const checkTransactionStatus = async (transactionId) => {
     try {
       const response = await fetch(`http://localhost:8081/v1/transacciones/${transactionId}/estado`);
       const result = await response.json();
-      
+
       if (result.estado === "AUT") {
         setNotification({
           show: true,
@@ -47,15 +46,14 @@ const MainPage = () => {
     }
   };
 
-  // Efecto para iniciar el polling cuando hay una transacción en curso
   useEffect(() => {
     if (currentTransaction) {
       const interval = setInterval(() => {
         checkTransactionStatus(currentTransaction.codigoUnicoTransaccion);
-      }, 2000); // Consultar cada 2 segundos
-      
+      }, 2000);
+
       setPollingInterval(interval);
-      
+
       return () => clearInterval(interval);
     }
   }, [currentTransaction]);
@@ -66,31 +64,28 @@ const MainPage = () => {
     if (name === "cvv" && value.length > 3) return;
 
     if (name === "cardNumber") {
-      const formattedValue = value
-        .replace(/\D/g, "")
-        .replace(/(\d{4})(?=\d)/g, "$1 ");
+      const cleanedValue = value.replace(/\D/g, "").slice(0, 16);
+      const formattedValue = cleanedValue.replace(/(\d{4})(?=\d)/g, "$1 ");
       setFormData({ ...formData, [name]: formattedValue });
       return;
     }
 
     if (name === "expiryDate") {
-      // Format the expiry date to MM/YY
-      const formattedValue = value.replace(/[^0-9]/g, "").slice(0, 4); // Keep only digits and limit to 4
+      const formattedValue = value.replace(/[^0-9]/g, "").slice(0, 4);
       const mm = formattedValue.slice(0, 2);
       const yy = formattedValue.slice(2, 4);
       const newExpiryDate = `${mm}${yy.length > 0 ? '/' + yy : ''}`;
       setFormData({ ...formData, [name]: newExpiryDate });
-      
+
       // Validate the expiry date
       if (newExpiryDate.length === 5) {
         const currentDate = new Date();
-        const currentMonth = currentDate.getMonth() + 1; // Months are 0-based
-        const currentYear = currentDate.getFullYear() % 100; // Get last two digits of the year
+        const currentMonth = currentDate.getMonth() + 1; 
+        const currentYear = currentDate.getFullYear() % 100;
 
         const inputMonth = parseInt(mm, 10);
         const inputYear = parseInt(yy, 10);
 
-        // Validate month range
         if (inputMonth < 1 || inputMonth > 12) {
           setErrors((prevErrors) => ({
             ...prevErrors,
@@ -132,7 +127,7 @@ const MainPage = () => {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-  
+
     const newErrors = {};
     const cleanCardNumber = formData.cardNumber.replace(/\s/g, "");
     if (!cleanCardNumber || !/^\d{16}$/.test(cleanCardNumber)) {
@@ -141,11 +136,10 @@ const MainPage = () => {
     if (!formData.expiryDate || !/^(0[1-9]|1[0-2])\/\d{2}$/.test(formData.expiryDate)) {
       newErrors.expiryDate = "La fecha de vencimiento debe estar en formato MM/YY.";
     } else {
-      // Additional validation for expiry date
       const [mm, yy] = formData.expiryDate.split('/');
       const currentDate = new Date();
-      const currentMonth = currentDate.getMonth() + 1; // Months are 0-based
-      const currentYear = currentDate.getFullYear() % 100; // Get last two digits of the year
+      const currentMonth = currentDate.getMonth() + 1; 
+      const currentYear = currentDate.getFullYear() % 100; 
 
       const inputMonth = parseInt(mm, 10);
       const inputYear = parseInt(yy, 10);
@@ -165,14 +159,13 @@ const MainPage = () => {
     if (formData.interesDiferido && !formData.cuotas) {
       newErrors.cuotas = "Debe seleccionar el número de cuotas para el pago diferido.";
     }
-  
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
-  
+
     try {
-      // Preparar datos sensibles para encriptar
       const datosSensibles = JSON.stringify({
         cardNumber: formData.cardNumber.replace(/\s/g, ""),
         expiryDate: formData.expiryDate,
@@ -180,8 +173,6 @@ const MainPage = () => {
         nombreTarjeta: "JUAN PEREZ",
         direccionTarjeta: "Av. Principal 123"
       });
-
-      // Enviar transacción con datos encriptados y datos de diferido
       const transactionPayload = {
         monto: parseFloat(formData.transactionAmount),
         marca: formData.cardName,
@@ -210,7 +201,6 @@ const MainPage = () => {
         return;
       }
 
-      // Guardar la transacción actual y mostrar mensaje de procesamiento
       if (result.transaccion) {
         setCurrentTransaction(result.transaccion);
         setNotification({
@@ -219,7 +209,7 @@ const MainPage = () => {
           type: "warning"
         });
       }
-      
+
       resetForm();
     } catch (error) {
       console.error('Error detallado:', error);
@@ -232,7 +222,6 @@ const MainPage = () => {
     }
   };
 
-  // Agregar el componente de notificación
   const Notification = ({ message, type }) => (
     <div className={`notification ${type}`} style={{
       position: 'fixed',
@@ -266,9 +255,9 @@ const MainPage = () => {
     <main className="main-container">
       <h1 className="main-title">Realizar Transacción</h1>
       {notification.show && (
-        <Notification 
-          message={notification.message} 
-          type={notification.type} 
+        <Notification
+          message={notification.message}
+          type={notification.type}
         />
       )}
       <form onSubmit={handleFormSubmit} className="form">

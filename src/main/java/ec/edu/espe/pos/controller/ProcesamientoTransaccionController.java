@@ -17,7 +17,6 @@ import ec.edu.espe.pos.controller.dto.GatewayTransaccionDTO;
 import ec.edu.espe.pos.controller.dto.TransaccionRespuestaDTO;
 import ec.edu.espe.pos.controller.mapper.TransaccionMapper;
 import ec.edu.espe.pos.model.Transaccion;
-import ec.edu.espe.pos.exception.NotFoundException;
 import ec.edu.espe.pos.exception.InvalidDataException;
 
 import jakarta.validation.Valid;
@@ -52,23 +51,19 @@ public class ProcesamientoTransaccionController {
         log.info("Recibiendo petición para procesar pago: {}", request);
 
         try {
-            // Crear objeto transacción con datos básicos
             Transaccion transaccion = new Transaccion();
             transaccion.setMonto(request.getMonto());
             transaccion.setMarca(request.getMarca());
 
-            // Primero guardamos la transacción inicial
             Transaccion transaccionInicial = transaccionService.guardarTransaccionInicial(transaccion);
             log.info("Transacción guardada inicialmente: {}", transaccionInicial);
 
-            // Devolver respuesta inmediata con estado "pending"
             TransaccionRespuestaDTO respuestaInicial = TransaccionRespuestaDTO.builder()
                     .mensaje("Transacción registrada, procesando pago...")
                     .estado("pending")
                     .codigoUnicoTransaccion(transaccionInicial.getCodigoUnicoTransaccion())
                     .build();
 
-            // Procesamos la transacción en segundo plano
             new Thread(() -> {
                 try {
                     transaccionService.procesarConGateway(transaccionInicial,
@@ -80,7 +75,6 @@ public class ProcesamientoTransaccionController {
                 }
             }).start();
 
-            // Retornar respuesta inmediata al cliente
             return ResponseEntity.status(201).body(respuestaInicial);
 
         } catch (InvalidDataException e) {
