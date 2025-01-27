@@ -64,16 +64,10 @@ public class ProcesamientoTransaccionController {
                     .codigoUnicoTransaccion(transaccionInicial.getCodigoUnicoTransaccion())
                     .build();
 
-            new Thread(() -> {
-                try {
-                    transaccionService.procesarConGateway(transaccionInicial,
-                            request.getDatosTarjeta(),
-                            request.getInteresDiferido(),
-                            request.getCuotas());
-                } catch (Exception e) {
-                    log.error("Error en procesamiento asíncrono: {}", e.getMessage());
-                }
-            }).start();
+            transaccionService.procesarConGateway(transaccionInicial,
+                    request.getDatosTarjeta(),
+                    request.getInteresDiferido(),
+                    request.getCuotas());
 
             return ResponseEntity.status(201).body(respuestaInicial);
 
