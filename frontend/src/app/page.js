@@ -32,6 +32,9 @@ const MainPage = () => {
         });
         clearInterval(pollingInterval);
         setCurrentTransaction(null);
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
       } else if (result.estado === "REC") {
         setNotification({
           show: true,
@@ -40,6 +43,9 @@ const MainPage = () => {
         });
         clearInterval(pollingInterval);
         setCurrentTransaction(null);
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
       }
     } catch (error) {
       console.error("Error al consultar estado:", error);
@@ -57,6 +63,16 @@ const MainPage = () => {
       return () => clearInterval(interval);
     }
   }, [currentTransaction]);
+
+  useEffect(() => {
+    if (notification.show) {
+      const timer = setTimeout(() => {
+        setNotification({ show: false, message: "", type: "" });
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
