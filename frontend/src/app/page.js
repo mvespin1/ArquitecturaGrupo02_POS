@@ -73,6 +73,44 @@ const MainPage = () => {
       return;
     }
 
+    if (name === "expiryDate") {
+      // Format the expiry date to MM/YY
+      const formattedValue = value.replace(/[^0-9]/g, "").slice(0, 4); // Keep only digits and limit to 4
+      const mm = formattedValue.slice(0, 2);
+      const yy = formattedValue.slice(2, 4);
+      const newExpiryDate = `${mm}${yy.length > 0 ? '/' + yy : ''}`;
+      setFormData({ ...formData, [name]: newExpiryDate });
+      
+      // Validate the expiry date
+      if (newExpiryDate.length === 5) {
+        const currentDate = new Date();
+        const currentMonth = currentDate.getMonth() + 1; // Months are 0-based
+        const currentYear = currentDate.getFullYear() % 100; // Get last two digits of the year
+
+        const inputMonth = parseInt(mm, 10);
+        const inputYear = parseInt(yy, 10);
+
+        // Validate month range
+        if (inputMonth < 1 || inputMonth > 12) {
+          setErrors((prevErrors) => ({
+            ...prevErrors,
+            expiryDate: "El mes debe estar entre 01 y 12."
+          }));
+        } else if (inputYear < currentYear || (inputYear === currentYear && inputMonth < currentMonth)) {
+          setErrors((prevErrors) => ({
+            ...prevErrors,
+            expiryDate: "La fecha de vencimiento debe ser mayor a la fecha actual."
+          }));
+        } else {
+          setErrors((prevErrors) => ({
+            ...prevErrors,
+            expiryDate: ""
+          }));
+        }
+      }
+      return;
+    }
+
     if (type === "radio") {
       setFormData({
         ...formData,
@@ -102,6 +140,21 @@ const MainPage = () => {
     }
     if (!formData.expiryDate || !/^(0[1-9]|1[0-2])\/\d{2}$/.test(formData.expiryDate)) {
       newErrors.expiryDate = "La fecha de vencimiento debe estar en formato MM/YY.";
+    } else {
+      // Additional validation for expiry date
+      const [mm, yy] = formData.expiryDate.split('/');
+      const currentDate = new Date();
+      const currentMonth = currentDate.getMonth() + 1; // Months are 0-based
+      const currentYear = currentDate.getFullYear() % 100; // Get last two digits of the year
+
+      const inputMonth = parseInt(mm, 10);
+      const inputYear = parseInt(yy, 10);
+
+      if (inputMonth < 1 || inputMonth > 12) {
+        newErrors.expiryDate = "El mes debe estar entre 01 y 12.";
+      } else if (inputYear < currentYear || (inputYear === currentYear && inputMonth < currentMonth)) {
+        newErrors.expiryDate = "La fecha de vencimiento debe ser mayor a la fecha actual.";
+      }
     }
     if (!formData.cvv || formData.cvv.length !== 3) {
       newErrors.cvv = "El CVV debe tener exactamente 3 dígitos.";
