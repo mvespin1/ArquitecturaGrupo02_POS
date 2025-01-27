@@ -9,7 +9,6 @@ import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-// ACTUALIZACION A UTILIZAR LOMBOK
 
 @Data
 @NoArgsConstructor
