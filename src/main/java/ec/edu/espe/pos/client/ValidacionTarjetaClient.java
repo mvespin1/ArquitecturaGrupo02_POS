@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import ec.edu.espe.pos.controller.dto.ValidacionTarjetaDTO;
 
-@FeignClient(name = "validacionTarjeta", url = "http://18.118.126.105")
+@FeignClient(name = "validacionTarjeta", url = "http://ec2-3-23-102-137.us-east-2.compute.amazonaws.com")
 public interface ValidacionTarjetaClient {
 
     @PostMapping("/v1/tarjetas/validar")
