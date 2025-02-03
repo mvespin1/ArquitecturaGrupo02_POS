@@ -8,6 +8,6 @@ public class TarjetaInvalidaException extends RuntimeException {
 
     @Override
     public String getMessage() {
-        return "Error en la validación de la tarjeta: " + super.getMessage();
+        return "Tarjeta inválida";
     }
 } 

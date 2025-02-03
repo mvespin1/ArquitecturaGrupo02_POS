@@ -72,7 +72,7 @@ public class ProcesamientoTransaccionController {
         } catch (TarjetaInvalidaException e) {
             log.error("Error en validación de tarjeta: {}", e.getMessage());
             return ResponseEntity.status(405).body(TransaccionRespuestaDTO.builder()
-                    .mensaje(e.getMessage())
+                    .mensaje("Tarjeta inválida")
                     .estado("RECHAZADA")
                     .build());
         } catch (InvalidDataException e) {
